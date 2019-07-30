@@ -8,8 +8,6 @@
             </tr>
         </table>
     </div>
-
-
 </template>
 
 <script>
@@ -21,9 +19,82 @@
         data() {
             return {}
         },
+        mounted(){
+            var self = this;
+            var divIds = [];
+            var doc = document;
+            var divs=document.querySelectorAll('.navi-div');
+            for (var i = 0; i < divs.length; i++) {
+                var element = divs[i];
+                divIds.push(element.id);
+            }
+            var $scrollBox = doc.querySelector('.container');
+            var scrollCallback = self.debounce(function () {
+                var top = $scrollBox.scrollTop; //设置变量top,表示当前滚动条到顶部的值
+                divs=document.querySelectorAll('.navi-div');
+                var num=-1;
+                for (var i in divs){
+                    if (top < (divs[i].offsetTop-divs[i].offsetHeight/2)){
+                        break;
+                    }else if (top>=divs[i].offsetTop-divs[i].offsetHeight/2) {
+                        num=i
+                    }
+                }
+                if (num!=-1){
+                    for (var i in self.$props.nodes){
+                        self.$props.nodes[i].display=false;
+                        self.$props.nodes[i].isSelected=false;
+                        if (self.$props.nodes[i].divName==divIds[num]){
+                            self.$props.nodes[i].display=true;
+                            self.$props.nodes[i].isSelected=true;
+                        }
+                    }
+                }else {
+                    for (var i in self.$props.nodes){
+                        self.$props.nodes[i].display=false;
+                        self.$props.nodes[i].isSelected=false;
+                    }
+                }
+            }, 150);
+            $scrollBox.addEventListener('scroll', scrollCallback)
+
+
+        },
         methods: {
+            debounce(func, wait, immediate) {
+                var timeout, args, context, timestamp, result;
+                var later = function () {
+                    // 据上一次触发时间间隔
+                    var last = new Date() - timestamp;
+                    // 上次被包装函数被调用时间间隔last小于设定时间间隔wait
+                    if (last < wait && last > 0) {
+                        timeout = setTimeout(later, wait - last);
+                    } else {
+                        timeout = null;
+                        // 如果设定为immediate===true，因为开始边界已经调用过了此处无需调用
+                        if (!immediate) {
+                            result = func.apply(context, args);
+                            if (!timeout) context = args = null;
+                        }
+                    }
+                };
+                return function () {
+                    context = this;
+                    args = arguments;
+                    timestamp = new Date();
+                    var callNow = immediate && !timeout;
+                    // 如果延时不存在，重新设定延时
+                    if (!timeout) timeout = setTimeout(later, wait);
+                    if (callNow) {
+                        result = func.apply(context, args);
+                        context = args = null;
+                    }
+
+                    return result;
+                };
+            },
             scroll: function (div) {
-                this.handleSelecte(div);
+                this.handleSelect(div);
                 if (div) {
                     let anchorElement = document.getElementById(div);
                     if (anchorElement) {
@@ -31,11 +102,12 @@
                     }
                 }
             },
-            handleSelecte(div){
+            handleSelect(div){
                 for (var i in this.$props.nodes){
                     this.$props.nodes[i].isSelected=false;
                     if (this.$props.nodes[i].divName==div){
                         this.$props.nodes[i].isSelected=true;
+                        this.$props.nodes[i].display=true;
                     }
                 }
             },
